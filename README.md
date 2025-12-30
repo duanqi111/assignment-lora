@@ -15,23 +15,7 @@
 ---
 
 ## 🛠️ 环境依赖与配置
-
-### 1. 软件依赖
-项目核心环境要求如下（详见 `requirements.txt`）：
-- **Python**: 3.10+
-- **CUDA/PyTorch**: 2.1.0+
-- **关键库**: `transformers (4.37.2)`, `peft (0.8.2)`, `bitsandbytes (0.43.1)`, `gradio (4.19.1)`
-
-### 2. 环境安装
-```bash
-# 创建虚拟环境
-conda create -n lora python=3.10 -y
-conda activate lora
-
-# 安装依赖
-pip install -r requirements.txt
-```bash
-### 3. 代码框架：
+### 1. 代码结构
 lora/
 ├── model/                  # 模型目录：存放基础模型(Qwen2.5)及微调权重
 ├── api/                    
@@ -45,3 +29,20 @@ lora/
 ├── requirements.txt        # 环境清单
 ├── front.html              # 前端交互：可视化对话界面
 └── README.md               # 项目说明文档
+### 2. 软件依赖
+项目核心环境要求如下（详见 `requirements.txt`）：
+- **Python**: 3.10+
+- **CUDA/PyTorch**: 2.1.0+
+- **关键库**: `transformers (4.37.2)`, `peft (0.8.2)`, `bitsandbytes (0.43.1)`, `gradio (4.19.1)`
+
+### 3. 环境安装
+```bash
+# 创建虚拟环境
+conda create -n lora python=3.10 -y
+conda activate lora
+
+# 安装依赖
+pip install -r requirements.txt
+
+
+
