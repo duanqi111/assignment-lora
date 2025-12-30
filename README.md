@@ -31,7 +31,7 @@ lora/
 ├── requirements.txt        # Python 依赖
 ├── front.html              # 前端交互页面
 └── README.md               # 项目说明
-
+```  
 
 ### 2. 软件依赖
 项目核心环境要求如下（详见 `requirements.txt`）：
