@@ -29,6 +29,8 @@ lora/
 ├── requirements.txt        # 环境清单
 ├── front.html              # 前端交互：可视化对话界面
 └── README.md               # 项目说明文档
+
+
 ### 2. 软件依赖
 项目核心环境要求如下（详见 `requirements.txt`）：
 - **Python**: 3.10+
