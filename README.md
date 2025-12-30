@@ -30,7 +30,7 @@ conda activate lora
 
 # 安装依赖
 pip install -r requirements.txt
-
+```bash
 ### 3. 代码框架：
 lora/
 ├── model/                  # 模型目录：存放基础模型(Qwen2.5)及微调权重
