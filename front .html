@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LoRA 网络安全问答</title>
+    <!-- 引入 Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'primary-dark': '#1f2937',
+                        'secondary-green': '#10b981',
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* 确保页面主体居中且适应高度 */
+        #app {
+            min-height: 100vh;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 font-sans">
+    <div id="app" class="flex flex-col items-center justify-center p-4">
+        <div class="w-full max-w-2xl bg-white shadow-2xl rounded-xl p-6 md:p-8">
+
+            <!-- Header -->
+            <div class="text-center mb-6 border-b pb-4">
+                <h1 class="text-3xl font-extrabold text-primary-dark"> LoRA网络安全问答</h1>
+                <p class="text-gray-500 mt-1">调用服务器上的 Qwen LoRA API。</p>
+            </div>
+
+            <!-- Output Display -->
+            <div id="chat-window" class="bg-gray-50 p-4 rounded-lg h-96 overflow-y-auto mb-6 border border-gray-200 flex flex-col space-y-4">
+                <div class="p-3 bg-secondary-green/10 rounded-lg max-w-xs self-start shadow-sm">
+                    <p class="font-bold text-secondary-green">系统（API 就绪）:</p>
+                    <p class="text-sm text-gray-800">请在下方输入您的安全问题。</p>
+                </div>
+            </div>
+
+            <!-- Input Area -->
+            <div class="flex flex-col space-y-4">
+                <!-- 写死API地址为127.0.0.1:6007 -->
+                <input type="hidden" id="server-ip-input" value="http://127.0.0.1:6007" />
+                <textarea 
+                    id="question-input" 
+                    rows="3" 
+                    placeholder="输入您的问题，例如：如何防止DDos攻击？" 
+                    class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-secondary-green focus:border-secondary-green resize-none"
+                    aria-label="输入您的问题"></textarea>
+                
+                <button 
+                    id="ask-button" 
+                    onclick="askQuestion()"
+                    class="w-full px-4 py-3 bg-secondary-green text-white font-semibold rounded-lg shadow-md hover:bg-green-600 transition duration-150 disabled:opacity-50"
+                    aria-live="polite">
+                    发送问题
+                </button>
+                <p id="status-message" class="text-center text-sm text-red-500 hidden"></p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // UI elements
+        const inputElement = document.getElementById('question-input');
+        const askButton = document.getElementById('ask-button');
+        const chatWindow = document.getElementById('chat-window');
+        const statusMessage = document.getElementById('status-message');
+        // 写死API地址
+        const apiBaseUrl = 'http://127.0.0.1:6007';
+
+        /**
+         * 显示/隐藏加载指示器和禁用按钮
+         */
+        function setLoading(isLoading) {
+            askButton.disabled = isLoading;
+            if (isLoading) {
+                askButton.textContent = "AI 正在推理中...";
+                statusMessage.classList.add('hidden');
+            } else {
+                askButton.textContent = "发送问题";
+            }
+        }
+
+        /**
+         * 将新消息添加到聊天界面
+         */
+        function appendMessage(role, content) {
+            const isUser = role === 'User';
+            const messageElement = document.createElement('div');
+            
+            messageElement.className = `p-3 rounded-xl max-w-full shadow-md ${
+                isUser 
+                ? 'bg-secondary-green text-white self-end' 
+                : 'bg-gray-200 text-primary-dark self-start'
+            }`;
+            
+            messageElement.innerHTML = `<p class="font-bold mb-1">${role}：</p><pre class="whitespace-pre-wrap font-sans text-sm">${content}</pre>`;
+            
+            chatWindow.appendChild(messageElement);
+            // 滚动到底部
+            chatWindow.scrollTop = chatWindow.scrollHeight;
+        }
+
+        /**
+         * 调用本地 API 进行推理
+         */
+        async function askQuestion() {
+            const question = inputElement.value.trim();
+            // 使用写死的API地址
+            const apiUrl = `${apiBaseUrl}/ask`;
+
+            if (!question) {
+                statusMessage.textContent = "请输入您的问题。";
+                statusMessage.classList.remove('hidden');
+                return;
+            }
+
+            statusMessage.classList.add('hidden');
+            
+            // 1. 显示用户提问
+            appendMessage('User', question);
+            setLoading(true);
+
+            try {
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json' 
+                    },
+                    body: JSON.stringify({ question: question })
+                });
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`API 返回错误状态: ${response.status}. 详情: ${errorText.substring(0, 100)}...`);
+                }
+
+                const result = await response.json();
+                
+                if (result.answer) {
+                    // 2. 显示 AI 回答
+                    appendMessage('LoRA AI', result.answer);
+                } else if (result.error) {
+                    throw new Error(`模型返回错误: ${result.error}`);
+                }
+                
+                inputElement.value = ''; // 清空输入框
+                
+            } catch (error) {
+                console.error("API Call Error:", error);
+                // 专门捕获 URL 解析错误
+                if (error.message.includes("Failed to parse URL")) {
+                    const urlParseError = `URL 解析失败。请确保后端服务地址配置正确。`;
+                    statusMessage.textContent = urlParseError;
+                    appendMessage('错误', urlParseError);
+                } else {
+                    const errorMessage = `连接或推理失败。请确保后端服务 (FastAPI) 正在运行，并且地址 ${apiBaseUrl} 配置正确。错误信息: ${error.message}`;
+                    statusMessage.textContent = errorMessage;
+                    appendMessage('错误', errorMessage);
+                }
+                statusMessage.classList.remove('hidden');
+            } finally {
+                setLoading(false);
+            }
+        }
+        
+        // 绑定 Enter 键提交
+        inputElement.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey && !askButton.disabled) {
+                e.preventDefault(); // 阻止默认的换行行为
+                askQuestion();
+            }
+        });
+
+    </script>
+</body>
+</html>
